@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Grade Ledger</title>
+<link rel="manifest" href="manifest.webmanifest" />
+<meta name="theme-color" content="#0b2545" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="Grades" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+/* Navy and cream palette on Fuel's layout system. Navy stays on the blue side (no purple cast). */
+:root{
+  --navy:#0b2545; --navy2:#13315c; --on:#f7f1e3;           /* sidebar, ink, and text on navy */
+  --bg:#f4eee1; --bg2:#faf6ec; --surface:#fffcf5; --surface2:#efe7d6; --raise:#e6dcc6;
+  --line:#e5dbc6; --line2:#d4c7ad;
+  --text:#0b2545; --text2:#2b4366; --mute:#677489; --dim:#a4a9b0;
+  --on-mute:rgba(247,241,227,.66); --on-dim:rgba(247,241,227,.42); --on-line:rgba(247,241,227,.14);
+  --ease:cubic-bezier(.22,1,.36,1); --ease2:cubic-bezier(.65,0,.35,1);
+  --r:12px; --sb:232px;
+  --shadow:0 1px 2px rgba(11,37,69,.05),0 1px 1px rgba(11,37,69,.03);
+  --shadow2:0 12px 32px -12px rgba(11,37,69,.22);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{color-scheme:light}
+body{background:var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;min-height:100vh;font-feature-settings:"cv11","ss01"}
+.h{letter-spacing:-.015em}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,select{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:8px 11px;outline:none;transition:border-color .2s,box-shadow .2s;min-width:0}
+input::placeholder{color:var(--dim)}
+input:focus,select:focus{border-color:var(--text);box-shadow:0 0 0 3px rgba(11,37,69,.08)}
+input[type=number]{font-variant-numeric:tabular-nums;text-align:right}
+button:focus-visible{outline:2px solid var(--text);outline-offset:2px}
+svg.i{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-columns:var(--sb) 1fr;min-height:100vh}
+aside.sb{position:sticky;top:0;height:100vh;padding:20px 12px;border-right:1px solid var(--navy);background:var(--navy);color:var(--on);display:flex;flex-direction:column;gap:24px}
+aside.sb button:focus-visible{outline-color:var(--on)}
+.brand{display:flex;align-items:center;gap:10px;padding:2px 10px}
+.mark{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;background:var(--on);color:var(--navy);font-weight:700;font-size:15px;letter-spacing:-.04em}
+.brand b{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.brand small{display:block;font-size:11.5px;color:var(--on-mute);margin-top:-1px}
+.navlbl{font-size:11px;font-weight:500;color:var(--on-dim);padding:0 12px;text-transform:uppercase;letter-spacing:.06em}
+.navlbl.in{padding:12px 12px 4px}
+nav.nav{display:flex;flex-direction:column;gap:1px;position:relative}
+nav.nav button{display:flex;align-items:center;gap:10px;height:36px;padding:0 12px;border-radius:8px;color:var(--on-mute);font-weight:500;font-size:13.5px;transition:color .2s;position:relative;z-index:1;text-align:left}
+nav.nav button:hover,nav.nav button.on{color:var(--on)}
+nav.nav .ng{margin-left:auto;font-style:normal;font-size:12px;color:var(--on-dim);font-variant-numeric:tabular-nums}
+nav.nav button.on .ng{color:var(--on-mute)}
+nav.nav .pill{position:absolute;left:0;right:0;top:0;height:36px;border-radius:8px;background:var(--on-line);box-shadow:inset 2px 0 0 var(--on);transition:transform .4s var(--ease);z-index:0}
+.sb-foot{margin-top:auto;padding:14px;border-radius:10px;background:var(--navy2);border:1px solid var(--on-line)}
+#installBtn:not(.hide)+.sb-foot{margin-top:-14px}
+.sb-foot .lbl,.sb-foot .muted{font-size:11.5px;color:var(--on-mute)}
+.sb-foot .big{font-size:18px;font-weight:600;margin-top:2px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.sb-foot .big .muted{font-size:13px}
+.mini{height:4px;border-radius:4px;background:var(--line);overflow:hidden;margin-top:10px}
+.sb-foot .mini{background:var(--on-line)}
+.mini i{display:block;height:100%;border-radius:inherit;background:var(--text);transition:width 1s var(--ease)}
+.sb-foot .mini i{background:var(--on)}
+main{padding:28px 36px 72px;max-width:1320px;width:100%;min-width:0}
+@media (max-width:920px){
+  .app{grid-template-columns:1fr}
+  aside.sb{position:sticky;height:auto;flex-direction:row;align-items:center;padding:8px 12px;gap:8px;z-index:20;border-right:0;border-bottom:1px solid var(--navy);overflow-x:auto}
+  .brand small,.brand b,.sb-foot,nav.nav .pill,.navlbl,nav.nav .ng{display:none}
+  nav.nav{flex-direction:row}
+  nav.nav button{white-space:nowrap}
+  nav.nav button svg{display:none}
+  nav.nav button[data-v="dash"] svg,nav.nav button[data-v="settings"] svg{display:block}
+  nav.nav button[data-v="dash"] span,nav.nav button[data-v="settings"] span{display:none}
+  nav.nav button.on{background:var(--on-line)}
+  main{padding:20px 14px 60px}
+}
+
+/* ---------- motion ---------- */
+.enter{animation:viewIn .45s var(--ease) both}
+@keyframes viewIn{from{opacity:0;transform:translateY(6px)}}
+.st>*{animation:rise .5s var(--ease) both;animation-delay:calc(var(--i,0)*40ms)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@keyframes fadeIn{from{opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:24px;padding-bottom:20px;border-bottom:1px solid var(--line)}
+.top .eyebrow{font-size:12.5px;color:var(--mute)}
+.top h1{font-size:26px;font-weight:600;letter-spacing:-.025em;line-height:1.2;margin-top:3px;text-wrap:balance}
+.sp{flex:1}
+.seg{display:flex;align-items:center;gap:2px;padding:3px;border-radius:9px;background:var(--surface2);border:1px solid var(--line);margin-top:12px}
+.seg button{white-space:nowrap;height:28px;min-width:32px;padding:0 10px;border-radius:6px;color:var(--text2);display:grid;place-items:center;font-weight:500;font-size:12.5px;transition:background .2s,color .2s,box-shadow .2s}
+.seg button:hover{color:var(--text)}
+.seg button.on{background:var(--surface);color:var(--text);box-shadow:var(--shadow),0 0 0 1px var(--line)}
+.seg input{margin-left:auto;width:72px;height:28px;padding:4px 8px;font-size:12.5px;border-radius:6px}
+.tag{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+.tag.warnw{background:var(--surface);border-style:dashed;color:var(--mute)}
+.btn{white-space:nowrap;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:8px;font-weight:500;font-size:13px;background:var(--surface);border:1px solid var(--line2);box-shadow:var(--shadow);transition:background .2s,border-color .2s,transform .15s}
+.btn:hover{background:var(--bg2);border-color:var(--text2)}
+.btn:active{transform:scale(.97)}
+.btn.pri{background:var(--navy);border-color:var(--navy);color:var(--on)}
+.btn.pri:hover{background:var(--navy2)}
+.btn.sm{height:28px;padding:0 10px;font-size:12px;border-radius:7px}
+.btn.sm svg.i{width:14px;height:14px}
+
+/* ---------- cards ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--shadow);min-width:0}
+.ch{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.ch h3{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.ch .sub{font-size:12px;color:var(--mute)}
+.grid{display:grid;gap:16px}
+.kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+.main2{grid-template-columns:minmax(0,1.65fr) minmax(0,1fr);margin-top:16px;align-items:start}
+.g2{grid-template-columns:1fr 1fr}
+@media (max-width:1180px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1000px){.main2,.g2{grid-template-columns:1fr}}
+@media (max-width:520px){.kpis{grid-template-columns:1fr}}
+.muted{color:var(--mute)} .dim{color:var(--dim)} .small{font-size:12px} .xs{font-size:11.5px}
+
+/* ---------- KPI ---------- */
+.kpi .k-top{display:flex;align-items:center;gap:8px;color:var(--text2);font-weight:500;font-size:13px}
+.kpi .pct{margin-left:auto;font-size:12px;font-weight:500;color:var(--mute);font-variant-numeric:tabular-nums}
+.kpi .val{display:flex;align-items:baseline;gap:6px;margin:12px 0 14px;flex-wrap:wrap}
+.kpi .val b{font-size:30px;font-weight:600;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.kpi .val span{color:var(--mute);font-size:13px}
+.kpi .val b span{color:inherit;font-size:inherit}
+.kpi .val .lt{align-self:center;margin-left:4px}
+.kpi .rem{margin-top:10px;font-size:12px;color:var(--mute)}
+.bar{height:6px;border-radius:6px;background:var(--surface2);overflow:hidden;position:relative}
+.bar i{display:block;height:100%;width:0;border-radius:inherit;background:var(--text);transition:width 1s var(--ease)}
+.bar.scale b{position:absolute;top:0;bottom:0;width:1.5px;background:var(--surface)}
+.lt{display:inline-grid;place-items:center;min-width:24px;height:22px;padding:0 6px;border-radius:6px;font-size:12px;font-weight:600;background:var(--surface2);color:var(--text2);border:1px solid var(--line)}
+.lt.L-A{background:var(--navy);color:var(--on);border-color:var(--navy)}
+.lt.L-B{background:#3d5a80;color:var(--on);border-color:#3d5a80}
+.lt.L-C{background:var(--raise);color:var(--text)}
+.lt.L-D,.lt.L-F{background:var(--surface);color:var(--text);border:1.5px dashed var(--text)}
+
+/* ---------- overview course list ---------- */
+.clist{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.crow{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,240px) 28px;gap:16px;align-items:center;padding:14px;text-align:left;background:var(--surface);border-bottom:1px solid var(--line);transition:background .3s var(--ease)}
+.crow:last-child{border-bottom:0}
+.crow:hover{background:var(--bg2)}
+.cc{min-width:0}.cc b{display:block;font-size:14px;font-weight:600}.cc span{font-size:12.5px}
+.cg{display:flex;flex-direction:column;gap:6px}
+.cgv{display:flex;align-items:center;gap:8px}.cgv b{font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.go{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--dim);transition:all .2s}
+.go:hover{color:var(--text);background:var(--surface2)}
+@media (max-width:640px){.crow{grid-template-columns:minmax(0,1fr) 120px}.crow .go{display:none}}
+
+/* ---------- categories ---------- */
+.cats{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.cat{border-bottom:1px solid var(--line);background:var(--surface)}
+.cat:last-child{border-bottom:0}
+.chd{width:100%;display:grid;grid-template-columns:18px minmax(0,1fr) auto 70px 64px;gap:12px;align-items:center;padding:13px 14px;text-align:left;transition:background .3s var(--ease)}
+.chd:hover{background:var(--bg2)}
+.chev{color:var(--dim);transition:transform .3s var(--ease);display:grid}
+.chev svg.i{width:15px;height:15px}
+.cat.open .chev{transform:rotate(90deg);color:var(--text)}
+.cn{min-width:0}.cn b{font-weight:600;font-size:13.5px}.cn small{display:block;font-size:11.5px;color:var(--mute)}
+.cnt{font-size:12px;color:var(--mute);text-align:right;font-variant-numeric:tabular-nums}
+.cav{font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.cbody{display:none;padding:2px 14px 16px 44px;flex-direction:column;gap:12px;animation:fadeIn .3s var(--ease)}
+.cat.open .cbody{display:flex}
+.cbody{container-type:inline-size}
+@container (max-width:440px){
+  .cbody .sr{grid-template-columns:minmax(0,1fr) 10px minmax(0,1fr) 52px 28px}
+  .cbody .sr .sn{grid-column:1/-1}
+}
+.cat.open{background:var(--bg2)}
+.rows{display:flex;flex-direction:column;gap:6px}
+.sr{display:grid;grid-template-columns:minmax(0,1fr) 80px 10px 80px 56px 28px;gap:6px;align-items:center;animation:rise .3s var(--ease)}
+.sr input{padding:6px 9px;font-size:13px;width:100%}
+.rp{font-size:12px;color:var(--mute);text-align:right;font-variant-numeric:tabular-nums}
+.ctools{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:12px;color:var(--mute)}
+.ctools label{display:flex;align-items:center;gap:6px}
+.ctools input{width:68px;padding:5px 8px;font-size:12.5px}
+@media (max-width:640px){
+  .chd{grid-template-columns:16px minmax(0,1fr) auto 56px;gap:8px}.chd .cnt{display:none}
+  .cbody{padding-left:14px}
+}
+.callout{padding:11px 13px;border-radius:8px;background:var(--bg2);border:1px solid var(--line);border-left:2px solid var(--text);font-size:12.5px;color:var(--text2);margin-top:14px}
+.callout ul{padding-left:16px;display:flex;flex-direction:column;gap:4px}
+
+/* ---------- what-if ---------- */
+.sliders{display:flex;flex-direction:column;gap:16px}
+.sl-top{display:flex;justify-content:space-between;gap:10px;font-size:13px;font-weight:500}
+.sl-top b{font-variant-numeric:tabular-nums;font-weight:600}
+input[type=range]{width:100%;padding:0;border:0;box-shadow:none;background:transparent;accent-color:var(--text);margin:6px 0 2px;height:20px}
+.sec{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);margin:20px 0 6px;padding-top:16px;border-top:1px solid var(--line)}
+.nr{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--line);font-size:13px}
+.nr:last-of-type{border-bottom:0}
+.nr b{font-variant-numeric:tabular-nums;font-weight:600;white-space:nowrap}
+.nr b.no{text-decoration:line-through;text-decoration-thickness:1.5px;color:var(--mute)}
+.nr b.hard::after{content:" ▲";font-size:9px;vertical-align:2px}
+.nr b.ok{color:var(--text)}
+
+.toast{position:fixed;bottom:24px;left:50%;z-index:60;display:flex;align-items:center;gap:9px;padding:10px 16px;border-radius:9px;background:var(--navy);color:var(--on);box-shadow:0 16px 36px -12px rgba(11,37,69,.45);font-size:13px;font-weight:500;transform:translate(-50%,16px);opacity:0;transition:all .35s var(--ease);pointer-events:none}
+.toast.on{transform:translate(-50%,0);opacity:1}
+.hide{display:none!important}
+@media print{aside.sb,.noprint{display:none!important}.app{display:block}body{background:#fff}.card{box-shadow:none}.cbody{display:flex!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sb">
+    <div class="brand"><div class="mark">A</div><div><b>Grade Ledger</b><small>Fall 2026</small></div></div>
+    <nav class="nav" id="nav"><div class="pill" id="pill"></div></nav>
+    <button class="btn hide" id="installBtn" style="margin-top:auto;justify-content:center"><svg class="i" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>Install app</button>
+    <div class="sb-foot" id="sbfoot"></div>
+  </aside>
+  <main id="view"></main>
+</div>
+<div class="toast" id="toast"></div>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script>
+// Offline support + install button (only works when served over http/https, e.g. GitHub Pages)
+if ("serviceWorker" in navigator && location.protocol.startsWith("http")) navigator.serviceWorker.register("sw.js");
+let deferredInstall = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); deferredInstall = e; document.getElementById("installBtn")?.classList.remove("hide"); });
+window.addEventListener("appinstalled", () => document.getElementById("installBtn")?.classList.add("hide"));
+document.addEventListener("click", async (e) => { if (!e.target.closest("#installBtn") || !deferredInstall) return; deferredInstall.prompt(); await deferredInstall.userChoice; deferredInstall = null; document.getElementById("installBtn").classList.add("hide"); });
+</script>
+</body>
+</html>
