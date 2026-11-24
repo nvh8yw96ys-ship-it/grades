@@ -28,7 +28,7 @@ const defaults = { view: "dash", target: 90, courses: {}, sliders: {}, open: {} 
 let S;
 try { S = Object.assign(structuredClone(defaults), JSON.parse(localStorage.getItem(KEY) || "{}")); } catch { S = structuredClone(defaults); }
 COURSES.forEach((c) => (S.courses[c.id] = Object.assign(blank(), S.courses[c.id])));
-const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} };
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch {} hubSync(); };
 const course = (id) => COURSES.find((c) => c.id === id);
 
 // ---------- grade engine ----------
@@ -283,5 +283,14 @@ document.addEventListener("click", (e) => {
   }
 });
 window.addEventListener("resize", syncNav);
+// ---------- dashboard hub: publish a small grade summary for /hub/ (same origin) ----------
+function hubSync() {
+  try {
+    const g = gpa(false), gp = gpa(true);
+    localStorage.setItem("hub.grades", JSON.stringify({ v: 1, updated: new Date().toISOString(), term: TERM, gpa: g?.gpa ?? null, gpaProj: gp?.gpa ?? null, target: S.target,
+      courses: COURSES.map((c) => { const cu = current(c); return { id: c.id, code: c.code, name: c.name, hrs: c.hrs, grade: cu.grade, letter: letter(cu.grade), graded: cu.graded, proj: projected(c) }; }) }));
+  } catch {}
+}
+hubSync();
 render(true);
 })();
